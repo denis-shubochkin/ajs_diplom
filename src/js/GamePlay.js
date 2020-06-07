@@ -14,7 +14,7 @@ export default class GamePlay {
     this.loadGameListeners = [];
   }
 
-  bindToDOM(container) {
+   bindToDOM(container) {
     if (!(container instanceof HTMLElement)) {
       throw new Error('container is not HTMLElement');
     }
