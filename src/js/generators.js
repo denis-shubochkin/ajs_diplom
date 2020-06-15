@@ -21,6 +21,7 @@ export function* characterGenerator(allowedTypes, maxLevel) {
   if(Math.floor(Math.random()*10)===allowedTypes[0])
   {
     let b = new Bowman(1,'player');
+    b.level = Math.floor(1  + Math.random() * (maxLevel));
     do{
       b.cell = b.cells[Math.floor(Math.random() * b.cells.length)];
       if(!lockedCells.includes(b.cell)) {
@@ -34,6 +35,7 @@ export function* characterGenerator(allowedTypes, maxLevel) {
  if(Math.floor(Math.random()*10)===allowedTypes[1])
   {
     let s = new Swordsman(1,'player');
+    s.level = Math.floor(1  + Math.random() * (maxLevel));
     do{
       s.cell = s.cells[Math.floor(Math.random() * s.cells.length)];
       if(!lockedCells.includes(s.cell)) {
@@ -47,6 +49,7 @@ export function* characterGenerator(allowedTypes, maxLevel) {
   if(Math.floor(Math.random()*10)===allowedTypes[2])
   {
     let m = new Magician(1,'player');
+    m.level = Math.floor(1  + Math.random() * (maxLevel));
     do{
       m.cell = m.cells[Math.floor(Math.random() * m.cells.length)];
       if(!lockedCells.includes(m.cell)) {
@@ -67,6 +70,7 @@ if(allowedTypes.includes(4))
   if(Math.floor(Math.random()*10)===allowedTypes[0])
   {
     let d = new Daemon(1,'pc');
+    d.level = Math.floor(1  + Math.random() * (maxLevel));
     do{
       d.cell = d.cells[Math.floor(Math.random() * d.cells.length)];
       if(!lockedCells.includes(d.cell)) {
@@ -80,6 +84,7 @@ if(allowedTypes.includes(4))
   if(Math.floor(Math.random()*10)===allowedTypes[1])
   {
     let u = new Undead(1,'pc');
+    u.level = Math.floor(1  + Math.random() * (maxLevel));
     do{
       u.cell = u.cells[Math.floor(Math.random() * u.cells.length)];
       if(!lockedCells.includes(u.cell)) {
@@ -93,6 +98,7 @@ if(allowedTypes.includes(4))
   if(Math.floor(Math.random()*10)===allowedTypes[2])
   {
     let v = new Vampire(1,'pc');
+    v.level = Math.floor(1  + Math.random() * (maxLevel));
     do{
       v.cell = v.cells[Math.floor(Math.random() * v.cells.length)];
       if(!lockedCells.includes(v.cell)) {
@@ -116,10 +122,13 @@ export function generateTeam(allowedTypes, maxLevel, characterCount) {
   let badTeam = [];
   let c = 0;
    do {
+     if(maxLevel===1)
+     {
      goodTeam.push(g.next().value);
+     }
      badTeam.push(b.next().value);
      c++;
    }
-   while (c<=characterCount);
+   while (c<characterCount);
    return goodTeam.concat(badTeam);
 }

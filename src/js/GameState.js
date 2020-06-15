@@ -1,5 +1,9 @@
 export default class GameState {
-  let countTurn = 1;
+  constructor() {
+    this.countTurn = 1;
+  }
+
+ 
   turn() {
     if (this.countTurn % 2 === 0)
     {

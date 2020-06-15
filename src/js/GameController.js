@@ -1,7 +1,9 @@
 import themes from './themes'
 import cursors from './cursors'
 import {generateTeam} from './generators'
+import {characterGenerator} from './generators'
 import PositionedCharacter from './PositionedCharacter'
+import GameState from './GameState'
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -10,17 +12,36 @@ export default class GameController {
     this.players = [];
     this.selectedYellow;
     this.selectedGreen;
-    this.selectedRed;
+    this.selectedRed = '';
     this.pc = [];
     this.level = themes.prairie;
+    this.allowedAttack = 0;
   }
+
+  resetCells(){
+    let lockedCells = [];
+    for(let i = 0; i< this.players.length; i++)
+    {
+    do {
+      this.players[i].cell = this.players[i].cells[Math.floor(Math.random() * this.players[i].cells.length)];
+      if(!lockedCells.includes(this.players[i].cell)) {
+        lockedCells.push(this.players[i].cell);
+        break;
+      }
+    }
+    while (1===1)
+  }
+}
 
   changeLevel()
   {
+    let playersCount = 0;
+    // Первый уровень
     if (this.level === themes.prairie) {
       this.level = themes.desert
       this.gamePlay.drawUi(themes.desert);
       this.clearCells();
+      this.pc=[];
       for(let i = 0; i< this.players.length; i++)
       {
         if(['daemon','undead','vampire'].includes(this.players[i].type))
@@ -31,13 +52,81 @@ export default class GameController {
         {
           this.players[i].level += 1;
           this.players[i].health = 100;
+          playersCount++;
         }
       }
-
+      let n = characterGenerator([0,1,2],1);    
+      this.players.push(n.next().value);
+      playersCount++;
+      this.resetCells();
+      this.players = this.players.concat(generateTeam([0,1],2,playersCount));
+      this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
+      this.gamePlay.redrawPositions(this.pc);
       return;
     };
-    if (this.level === themes.desert) {this.level = themes.arctic};
-    if (this.level === themes.arctic) {this.level = themes.mountain};
+    // Второй уровень
+    if (this.level === themes.desert) {
+      this.level = themes.arctic
+      this.gamePlay.drawUi(themes.arctic);
+      this.clearCells();
+      this.pc=[];
+      for(let i = 0; i< this.players.length; i++)
+      {
+        if(['daemon','undead','vampire'].includes(this.players[i].type))
+        {
+          this.players.splice(i,1);
+        }
+        if(['bowman','swordsman','magician'].includes(this.players[i].type))
+        {
+          this.players[i].level += 1;
+          this.players[i].health = 100;
+          playersCount++;
+        }
+      }
+      let n = characterGenerator([0,1,2],2);    
+      for (let h =0;h<=1;h++)
+      {
+        this.players.push(n.next().value);
+        playersCount++;
+      }
+      this.resetCells();
+      this.players = this.players.concat(generateTeam([0,1],3,playersCount));
+      this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
+      this.gamePlay.redrawPositions(this.pc);
+      return;
+    };
+      // Третий уровень
+    if (this.level === themes.arctic) {
+      this.level = themes.mountain
+      this.gamePlay.drawUi(themes.mountain);
+      this.clearCells();
+      this.pc=[];
+      for(let i = 0; i< this.players.length; i++)
+      {
+        if(['daemon','undead','vampire'].includes(this.players[i].type))
+        {
+          this.players.splice(i,1);
+        }
+        if(['bowman','swordsman','magician'].includes(this.players[i].type))
+        {
+          this.players[i].level += 1;
+          this.players[i].health = 100;
+          playersCount++;
+        }
+      }
+      let n = characterGenerator([0,1,2],3);    
+      for (let h =0;h<=1;h++)
+      {
+        this.players.push(n.next().value);
+        playersCount++;
+      }
+      this.resetCells();
+      this.players = this.players.concat(generateTeam([0,1],4,playersCount));
+      this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
+      this.gamePlay.redrawPositions(this.pc);
+      return;
+    };
+    // Четвертый уровень
     if (this.level === themes.mountain) {this.gamePlay.showError('Игра пройдена');};
   }
   
@@ -154,10 +243,10 @@ if(index===63) return [7,7];
           this.selectedYellow = index;
           return;
         }
-        else
-        {
-          this.gamePlay.showError('Этот персонаж не играбельный');
-        }
+        // else
+        // {
+        //   this.gamePlay.showError('Этот персонаж не играбельный');
+        // }
       }
       if(this.players[i].cell === this.selectedYellow)
       {
@@ -170,9 +259,21 @@ if(index===63) return [7,7];
           this.clearCells();
           return;
         }
+      //   for (let t =0;t<=this.players.length;t++)
+      //     {
+      //       if(this.players[t].cell === index && this.allowedAttack===0)
+      //       {
+      //     
+      //   }
+      // }
         // Атака 
         if(this.selectedRed === index)
         {
+          if(this.allowedAttack===0)
+          {
+            this.gamePlay.showError('Сократите дистанцию');
+                return;
+          }
           for (let j =0;j<=this.players.length;j++)
           {
             if(this.players[j].cell === index)
@@ -202,15 +303,23 @@ if(index===63) return [7,7];
   }
 
   onCellEnter(index) {
-    
+    this.allowedAttack = 0;
     for(let i = 0; i< this.players.length; i++)
     {
       // Проверка на присутствие персонажа в клетке и вывод его инфо
-      if (this.players[i].cell === index && ['bowman','swordsman','magician'].includes(this.players[i].type))
+      if (this.players[i].cell === index)
       {
+        if (['bowman','swordsman','magician'].includes(this.players[i].type))
+        {
         this.gamePlay.setCursor(cursors.pointer);
         this.gamePlay.showCellTooltip(`${String.fromCodePoint(0x1F396)}${this.players[i].level} ${String.fromCodePoint(0x2694)} ${this.players[i].attack} ${String.fromCodePoint(0x1F6E1)}${this.players[i].defence} ${String.fromCodePoint(0x2764)}${this.players[i].health} `,index);
         return;
+        }
+        if (['daemon','undead','vampire'].includes(this.players[i].type))
+        {
+          this.gamePlay.setCursor(cursors.notallowed);
+          this.gamePlay.showCellTooltip(`${String.fromCodePoint(0x1F396)}${this.players[i].level} ${String.fromCodePoint(0x2694)} ${this.players[i].attack} ${String.fromCodePoint(0x1F6E1)}${this.players[i].defence} ${String.fromCodePoint(0x2764)}${this.players[i].health} `,index);
+        }
       }
     }
     for(let i = 0; i< this.players.length; i++)
@@ -228,10 +337,19 @@ if(index===63) return [7,7];
               { 
                 if(this.players[j].cell===index && !['bowman','swordsman','magician'].includes(this.players[j].type))
                 {
+                  if(playerCell[1]===cursorCell[1] && Math.abs(playerCell[0] - cursorCell[0])<=this.players[i].attackRange && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
+                  {
                   this.gamePlay.setCursor(cursors.crosshair);
                   this.gamePlay.selectCell(index,'red');
                   this.selectedRed = index;
+                  this.allowedAttack=1;
                   return;
+                  }
+                  else {
+                    this.selectedRed = index;
+                    this.gamePlay.setCursor(cursors.notallowed);
+                    return;
+                  }
                 }
                 else if(this.players[j].cell===index)
                 {
@@ -250,10 +368,19 @@ if(index===63) return [7,7];
               { 
                 if(this.players[j].cell===index && !['bowman','swordsman','magician'].includes(this.players[j].type))
                 {
-                  this.gamePlay.setCursor(cursors.crosshair);
-                  this.gamePlay.selectCell(index,'red');
+                  if(playerCell[0]===cursorCell[0] && Math.abs(playerCell[1] - cursorCell[1])<=this.players[i].attackRange && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
+                 {
+                    this.gamePlay.setCursor(cursors.crosshair);
+                    this.gamePlay.selectCell(index,'red');
+                    this.selectedRed = index;
+                    this.allowedAttack=1;
+                    return;
+                 }
+                 else {
                   this.selectedRed = index;
+                  this.gamePlay.setCursor(cursors.notallowed);
                   return;
+                }
                 }
                 else if(this.players[j].cell===index)
                 {
@@ -272,10 +399,19 @@ if(index===63) return [7,7];
               { 
                 if(this.players[j].cell===index && !['bowman','swordsman','magician'].includes(this.players[j].type))
                 {
-                  this.gamePlay.setCursor(cursors.crosshair);
-                  this.gamePlay.selectCell(index,'red');
-                  this.selectedRed = index;
-                  return;
+                  if(Math.abs(playerCell[1] - cursorCell[1])===Math.abs(playerCell[0] - cursorCell[0]) && Math.abs(playerCell[1] - cursorCell[1])<=this.players[i].attackRange && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
+                  {
+                    this.gamePlay.setCursor(cursors.crosshair);
+                    this.gamePlay.selectCell(index,'red');
+                    this.selectedRed = index;
+                    this.allowedAttack=1;
+                    return;
+                  }
+                  else {
+                    this.selectedRed = index;
+                    this.gamePlay.setCursor(cursors.notallowed);
+                    return;
+                  }
                 }
                 else if(this.players[j].cell===index)
                 {
@@ -318,10 +454,12 @@ if(index===63) return [7,7];
   }
 
   onNewgame() {
+    let gameState = new GameState();
+    this.level = themes.prairie;
     this.clearCells();
     this.players = [];
     this.pc = [];
-    this.players = generateTeam([0,1],2,1);
+    this.players = generateTeam([0,1],1,2);
     this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
     this.gamePlay.redrawPositions(this.pc);
   }
