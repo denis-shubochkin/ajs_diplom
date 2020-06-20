@@ -6,6 +6,7 @@ export default class Bowman extends Character {
         this.attack = 2500;
         this.defence = 25;
         this.health = 100;
+        this.side = 'good';
         this.range = 2;
         this.attackRange = 2;
         this.cells = [0,8,16,24,32,40,48,56,1,9,17,25,33,41,49,57];

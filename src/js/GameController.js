@@ -4,6 +4,12 @@ import {generateTeam} from './generators'
 import {characterGenerator} from './generators'
 import PositionedCharacter from './PositionedCharacter'
 import GameState from './GameState'
+import Bowman from './Bowman'
+import Swordsman from './Swordsman'
+import Magician from './Magician'
+import Daemon from './Daemon'
+import Undead from './Undead'
+import Vampire from './Vampire'
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -16,6 +22,9 @@ export default class GameController {
     this.pc = [];
     this.level = themes.prairie;
     this.allowedAttack = 0;
+    this.gameState = new GameState();
+    this.eventSucess = 0;
+    this.endGame = 0;
   }
 
   resetCells(){
@@ -35,6 +44,8 @@ export default class GameController {
 
   changeLevel()
   {
+    const charactersGood = [Bowman,Swordsman,Magician];
+    const charactersBad = [Daemon,Vampire,Undead];
     let playersCount = 0;
     // Первый уровень
     if (this.level === themes.prairie) {
@@ -51,15 +62,17 @@ export default class GameController {
         if(['bowman','swordsman','magician'].includes(this.players[i].type))
         {
           this.players[i].level += 1;
-          this.players[i].health = 100;
+          this.players[i].attack = Math.max(this.players[i].attack, this.players[i].attack * (1.8 - this.players[i].health / 100));
+          this.players[i].health += 80;
+          if (this.players[i].health>100) {this.players[i].health=100}
           playersCount++;
         }
       }
-      let n = characterGenerator([0,1,2],1);    
+      let n = characterGenerator(charactersGood,1);    
       this.players.push(n.next().value);
       playersCount++;
       this.resetCells();
-      this.players = this.players.concat(generateTeam([0,1],2,playersCount));
+      this.players = this.players.concat(generateTeam(charactersBad,2,playersCount));
       this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
       this.gamePlay.redrawPositions(this.pc);
       return;
@@ -79,18 +92,20 @@ export default class GameController {
         if(['bowman','swordsman','magician'].includes(this.players[i].type))
         {
           this.players[i].level += 1;
-          this.players[i].health = 100;
+          this.players[i].attack = Math.max(this.players[i].attack, this.players[i].attack * (1.8 - this.players[i].health / 100));
+          this.players[i].health += 80;
+          if (this.players[i].health>100) {this.players[i].health=100}
           playersCount++;
         }
       }
-      let n = characterGenerator([0,1,2],2);    
+      let n = characterGenerator(charactersGood,2);    
       for (let h =0;h<=1;h++)
       {
         this.players.push(n.next().value);
         playersCount++;
       }
       this.resetCells();
-      this.players = this.players.concat(generateTeam([0,1],3,playersCount));
+      this.players = this.players.concat(generateTeam(charactersBad,3,playersCount));
       this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
       this.gamePlay.redrawPositions(this.pc);
       return;
@@ -110,24 +125,29 @@ export default class GameController {
         if(['bowman','swordsman','magician'].includes(this.players[i].type))
         {
           this.players[i].level += 1;
-          this.players[i].health = 100;
+          this.players[i].attack = Math.max(this.players[i].attack, this.players[i].attack * (1.8 - this.players[i].health / 100));
+          this.players[i].health += 80;
+          if (this.players[i].health>100) {this.players[i].health=100}
           playersCount++;
         }
       }
-      let n = characterGenerator([0,1,2],3);    
+      let n = characterGenerator(charactersGood,3);    
       for (let h =0;h<=1;h++)
       {
         this.players.push(n.next().value);
         playersCount++;
       }
       this.resetCells();
-      this.players = this.players.concat(generateTeam([0,1],4,playersCount));
+      this.players = this.players.concat(generateTeam(charactersBad,4,playersCount));
       this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
       this.gamePlay.redrawPositions(this.pc);
       return;
     };
     // Четвертый уровень
-    if (this.level === themes.mountain) {this.gamePlay.showError('Игра пройдена');};
+    if (this.level === themes.mountain) {
+      this.endGame = 1;
+      this.gamePlay.showError('Игра пройдена');
+    };
   }
   
   transCoor(index) {
@@ -234,7 +254,7 @@ if(index===63) return [7,7];
       //выделение персонажа
       if (this.players[i].cell === index)
       {
-        if (['bowman','swordsman','magician'].includes(this.players[i].type))
+        if (['bowman','swordsman','magician'].includes(this.players[i].type) && this.gameState.current!='PC')
         {
           if(this.selectedYellow>= 0) {
             this.gamePlay.deselectCell(this.selectedYellow);
@@ -257,7 +277,9 @@ if(index===63) return [7,7];
           this.pc[i].position = index;
           this.gamePlay.redrawPositions(this.pc);
           this.clearCells();
-          return;
+          this.eventSucess = 1;
+          this.gameState.turn();
+          return this.onPCTurn();
         }
       //   for (let t =0;t<=this.players.length;t++)
       //     {
@@ -279,18 +301,24 @@ if(index===63) return [7,7];
             if(this.players[j].cell === index)
             {
               let dmg = Math.max(this.players[i].attack - this.players[j].defence, this.players[i].attack * 0.1);
+              
               this.gamePlay.showDamage(index,dmg).then((r) => {
                 this.players[j].health -= dmg;
                 this.gamePlay.redrawPositions(this.pc);
-              });
-              if(this.players[j].health<=0)
+              
+                if(this.players[j].health<=0)
               {
                 this.players.splice(j,1);
                 this.pc.splice(j,1);
                 this.gamePlay.redrawPositions(this.pc);
                 this.checkEnemies();
               }
-              return;
+            });
+              this.eventSucess = 1;
+              this.gameState.turn();
+              return this.onPCTurn();
+             // return;
+            
             }
             // else {
             //   this.gamePlay.showError('Этот противник уже уничтожен');
@@ -303,19 +331,21 @@ if(index===63) return [7,7];
   }
 
   onCellEnter(index) {
+    if(this.endGame!=1)
+    {
     this.allowedAttack = 0;
     for(let i = 0; i< this.players.length; i++)
     {
       // Проверка на присутствие персонажа в клетке и вывод его инфо
-      if (this.players[i].cell === index)
+      if (this.players[i].cell === index )
       {
-        if (['bowman','swordsman','magician'].includes(this.players[i].type))
+        if (['bowman','swordsman','magician'].includes(this.players[i].type) &&  this.gameState.current != 'PC')
         {
         this.gamePlay.setCursor(cursors.pointer);
         this.gamePlay.showCellTooltip(`${String.fromCodePoint(0x1F396)}${this.players[i].level} ${String.fromCodePoint(0x2694)} ${this.players[i].attack} ${String.fromCodePoint(0x1F6E1)}${this.players[i].defence} ${String.fromCodePoint(0x2764)}${this.players[i].health} `,index);
         return;
         }
-        if (['daemon','undead','vampire'].includes(this.players[i].type))
+        if (['daemon','undead','vampire'].includes(this.players[i].type) && this.gameState.current != 'PC')
         {
           this.gamePlay.setCursor(cursors.notallowed);
           this.gamePlay.showCellTooltip(`${String.fromCodePoint(0x1F396)}${this.players[i].level} ${String.fromCodePoint(0x2694)} ${this.players[i].attack} ${String.fromCodePoint(0x1F6E1)}${this.players[i].defence} ${String.fromCodePoint(0x2764)}${this.players[i].health} `,index);
@@ -325,7 +355,7 @@ if(index===63) return [7,7];
     for(let i = 0; i< this.players.length; i++)
     {
       // Действия выделенного игрока
-      if(this.players[i].cell === this.selectedYellow)
+      if(this.players[i].cell === this.selectedYellow )
       {
         let playerCell = this.transCoor(this.players[i].cell);
         let cursorCell = this.transCoor(index);
@@ -335,7 +365,15 @@ if(index===63) return [7,7];
               
               for(let j = 0; j< this.players.length; j++)
               { 
-                if(this.players[j].cell===index && !['bowman','swordsman','magician'].includes(this.players[j].type))
+                if(this.gameState.current==='PC' && this.players[j].cell===index)
+                {
+                  if (this.players[i].side===this.players[j].side)
+                  {
+                    return;
+                  }
+                }
+                if(this.players[j].cell===index && this.players[i].side!=this.players[j].side)
+                  //!['bowman','swordsman','magician'].includes(this.players[j].type)) || (this.players[j].cell===index && this.gameState.current==='PC' && ['bowman','swordsman','magician'].includes(this.players[j].type)))
                 {
                   if(playerCell[1]===cursorCell[1] && Math.abs(playerCell[0] - cursorCell[0])<=this.players[i].attackRange && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
                   {
@@ -343,6 +381,7 @@ if(index===63) return [7,7];
                   this.gamePlay.selectCell(index,'red');
                   this.selectedRed = index;
                   this.allowedAttack=1;
+                  this.eventSucess = 1;
                   return;
                   }
                   else {
@@ -360,13 +399,22 @@ if(index===63) return [7,7];
               this.gamePlay.setCursor(cursors.pointer);
               this.gamePlay.selectCell(index,'green');
               this.selectedGreen = index;
+              this.eventSucess = 1;
             }
             // Курсор по вертикали
             else if(playerCell[0]===cursorCell[0] && Math.abs(playerCell[1] - cursorCell[1])<=this.players[i].range && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
             {
               for(let j = 0; j< this.players.length; j++)
               { 
-                if(this.players[j].cell===index && !['bowman','swordsman','magician'].includes(this.players[j].type))
+                if(this.gameState.current==='PC' && this.players[j].cell===index)
+                {
+                  if (this.players[i].side===this.players[j].side)
+                  {
+                    return;
+                  }
+                }
+                if(this.players[j].cell===index && this.players[i].side!=this.players[j].side)
+                  //!['bowman','swordsman','magician'].includes(this.players[j].type)) || (this.players[j].cell===index && this.gameState.current==='PC' && ['bowman','swordsman','magician'].includes(this.players[j].type)))
                 {
                   if(playerCell[0]===cursorCell[0] && Math.abs(playerCell[1] - cursorCell[1])<=this.players[i].attackRange && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
                  {
@@ -374,6 +422,7 @@ if(index===63) return [7,7];
                     this.gamePlay.selectCell(index,'red');
                     this.selectedRed = index;
                     this.allowedAttack=1;
+                    this.eventSucess = 1;
                     return;
                  }
                  else {
@@ -391,13 +440,22 @@ if(index===63) return [7,7];
               this.gamePlay.setCursor(cursors.pointer);
               this.gamePlay.selectCell(index,'green');
               this.selectedGreen = index;
+              this.eventSucess = 1;
             }
             // Курсор по диагонали
             else if(Math.abs(playerCell[1] - cursorCell[1])===Math.abs(playerCell[0] - cursorCell[0]) && Math.abs(playerCell[1] - cursorCell[1])<=this.players[i].range && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
             {
               for(let j = 0; j< this.players.length; j++)
               { 
-                if(this.players[j].cell===index && !['bowman','swordsman','magician'].includes(this.players[j].type))
+                if(this.gameState.current==='PC' && this.players[j].cell===index)
+                {
+                  if (this.players[i].side===this.players[j].side)
+                  {
+                    return;
+                  }
+                }
+                if(this.players[j].cell===index && this.players[i].side!=this.players[j].side)
+                  //!['bowman','swordsman','magician'].includes(this.players[j].type)) || (this.players[j].cell===index && this.gameState.current==='PC' && ['bowman','swordsman','magician'].includes(this.players[j].type)))
                 {
                   if(Math.abs(playerCell[1] - cursorCell[1])===Math.abs(playerCell[0] - cursorCell[0]) && Math.abs(playerCell[1] - cursorCell[1])<=this.players[i].attackRange && JSON.stringify(playerCell) != JSON.stringify(cursorCell))
                   {
@@ -405,6 +463,7 @@ if(index===63) return [7,7];
                     this.gamePlay.selectCell(index,'red');
                     this.selectedRed = index;
                     this.allowedAttack=1;
+                    this.eventSucess = 1;
                     return;
                   }
                   else {
@@ -422,12 +481,14 @@ if(index===63) return [7,7];
               this.gamePlay.setCursor(cursors.pointer);
               this.gamePlay.selectCell(index,'green');
               this.selectedGreen = index;
+              this.eventSucess = 1;
             }
              else {
                this.gamePlay.setCursor(cursors.notallowed);
              }
   }
 }
+    }
 }
 
   onCellLeave(index) {
@@ -455,12 +516,42 @@ if(index===63) return [7,7];
 
   onNewgame() {
     let gameState = new GameState();
+    const charactersGood = [Bowman,Swordsman,Magician];
+    const charactersBad = [Daemon,Vampire,Undead];
     this.level = themes.prairie;
     this.clearCells();
     this.players = [];
     this.pc = [];
-    this.players = generateTeam([0,1],1,2);
+   // this.players = generateTeam(charactersGood,1,2);
+    this.players = generateTeam(charactersGood,1,2).concat(generateTeam(charactersBad,1,2))
     this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
     this.gamePlay.redrawPositions(this.pc);
   }
+
+  onPCTurn() {
+    if(this.gameState.current==='PC')
+    {
+      this.eventSucess = 0;
+      let randCell = 0;
+      let selected = 0;
+      do {
+    for(let i = 0; i< this.players.length; i++)
+    {
+      if (Math.floor(1  + Math.random() * (this.players.length)) ===i && ['daemon','undead','vampire'].includes(this.players[i].type))
+      {
+        this.selectedYellow = this.players[i].cell;
+        selected = 1;
+      }
+    }
+  }
+    while (selected!=1)
+        do {
+          randCell = Math.floor(0  + Math.random() * 63);
+          this.onCellEnter(randCell);
+        }
+        while(this.eventSucess === 0)
+          this.onCellClick(randCell);
+          this.clearCells();
+      }
+}
 }

@@ -1,6 +1,7 @@
 export default class GameState {
   constructor() {
     this.countTurn = 1;
+    this.current = 'Player';
   }
 
  
@@ -8,11 +9,11 @@ export default class GameState {
     if (this.countTurn % 2 === 0)
     {
       this.countTurn++;
-      return 'Player';
+      this.current = 'Player';
     }
     else {
       this.countTurn++;
-      return 'PC';
+      this.current = 'PC';
     }
   }
 
