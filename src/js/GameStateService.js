@@ -2,7 +2,7 @@ export default class GameStateService {
   constructor(storage) {
     this.storage = storage;
   }
-
+  
   save(state) {
     this.storage.setItem('state', JSON.stringify(state));
   }

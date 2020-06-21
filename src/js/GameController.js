@@ -10,6 +10,7 @@ import Magician from './Magician'
 import Daemon from './Daemon'
 import Undead from './Undead'
 import Vampire from './Vampire'
+import GameStateService from './GameStateService'
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -23,8 +24,30 @@ export default class GameController {
     this.level = themes.prairie;
     this.allowedAttack = 0;
     this.gameState = new GameState();
+    this.gameService = new GameStateService(localStorage);
     this.eventSucess = 0;
     this.endGame = 0;
+    this.resetLevel = 0;
+    this.savedGame = 0;
+  }
+
+  init() {
+    this.gamePlay.drawUi(themes.prairie);
+    this.onCellEnter = this.onCellEnter.bind( this );
+    this.onCellLeave = this.onCellLeave.bind( this );
+    this.onCellClick = this.onCellClick.bind( this );
+    this.onNewgame = this.onNewgame.bind( this );
+    this.onSaveGame = this.onSaveGame.bind(this);
+    this.onLoadGame = this.onLoadGame.bind(this);
+    this.gamePlay.addSaveGameListener(this.onSaveGame);
+    this.gamePlay.addLoadGameListener(this.onLoadGame);
+    this.gamePlay.addCellEnterListener(this.onCellEnter);
+    this.gamePlay.addCellClickListener(this.onCellClick);
+    this.gamePlay.addCellLeaveListener(this.onCellLeave);
+    this.gamePlay.addNewGameListener(this.onNewgame);
+    //
+    // TODO: add event listeners to gamePlay events
+    // TODO: load saved stated from stateService
   }
 
   resetCells(){
@@ -49,6 +72,7 @@ export default class GameController {
     let playersCount = 0;
     // Первый уровень
     if (this.level === themes.prairie) {
+      console.log(this.gameState.current);
       this.level = themes.desert
       this.gamePlay.drawUi(themes.desert);
       this.clearCells();
@@ -217,23 +241,11 @@ if(index===62) return [6,7];
 if(index===63) return [7,7];
   }
 
-  init() {
-    this.gamePlay.drawUi(themes.prairie);
-    this.onCellEnter = this.onCellEnter.bind( this );
-    this.onCellLeave = this.onCellLeave.bind( this );
-    this.onCellClick = this.onCellClick.bind( this );
-    this.onNewgame = this.onNewgame.bind( this );
-    this.gamePlay.addCellEnterListener(this.onCellEnter);
-    this.gamePlay.addCellClickListener(this.onCellClick);
-    this.gamePlay.addCellLeaveListener(this.onCellLeave);
-    this.gamePlay.addNewGameListener(this.onNewgame);
-    //
-    // TODO: add event listeners to gamePlay events
-    // TODO: load saved stated from stateService
-  }
+ 
 
   checkEnemies()
   {
+    this.resetLevel = 0;
     let enemiesCount = 0;
     for(let i = 0; i< this.players.length; i++)
     {
@@ -244,6 +256,9 @@ if(index===63) return [7,7];
     }
     if (enemiesCount===0)
     {
+      this.gameState.current = 'Player';
+      this.gameState.countTurn = 1;
+      this.resetLevel = 1;
       this.changeLevel();
     }
   }
@@ -279,7 +294,8 @@ if(index===63) return [7,7];
           this.clearCells();
           this.eventSucess = 1;
           this.gameState.turn();
-          return this.onPCTurn();
+          this.onPCTurn();
+          return; 
         }
       //   for (let t =0;t<=this.players.length;t++)
       //     {
@@ -313,10 +329,26 @@ if(index===63) return [7,7];
                 this.gamePlay.redrawPositions(this.pc);
                 this.checkEnemies();
               }
-            });
+            }).then(()=> {
+              if(this.resetLevel != 1)
+              {
               this.eventSucess = 1;
               this.gameState.turn();
-              return this.onPCTurn();
+              if(this.gameState.current==='PC')
+              {
+                this.onPCTurn();
+              }
+              if(this.gameState.current==='Player')
+              {
+                return;
+              }
+            }
+            })
+              
+            
+            //this.gameState.turn();
+            //this.onPCTurn();
+              return; 
              // return;
             
             }
@@ -507,6 +539,9 @@ if(index===63) return [7,7];
   clearCells() {
     if(this.selectedYellow>=0)
     {
+      this.selectedYellow = -1;
+      this.selectedGreen = -1;
+      this.selectedRed = -1;
       for (let i=0;i<Math.pow(this.gamePlay.boardSize,2);i++)
       {
         this.gamePlay.deselectCell(i);
@@ -515,17 +550,54 @@ if(index===63) return [7,7];
   }
 
   onNewgame() {
-    let gameState = new GameState();
     const charactersGood = [Bowman,Swordsman,Magician];
     const charactersBad = [Daemon,Vampire,Undead];
     this.level = themes.prairie;
+    this.gamePlay.drawUi(themes.prairie);
     this.clearCells();
+    this.resetCells();
     this.players = [];
     this.pc = [];
    // this.players = generateTeam(charactersGood,1,2);
     this.players = generateTeam(charactersGood,1,2).concat(generateTeam(charactersBad,1,2))
     this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
     this.gamePlay.redrawPositions(this.pc);
+  }
+  
+  onSaveGame() {
+    if (this.pc.length === 0)
+    {
+      this.gamePlay.showError('Начните игру');
+      return;
+    }
+   // this.gameService.storage = new Storage();
+    let state = {
+      players: this.players,
+      level: this.level
+    }
+    this.savedGame = 1;
+    //this.gameService.save = this.gameService.save.bind(this);
+    this.gameService.save(state);
+    alert('Игра сохранена');
+  }
+
+  onLoadGame() {
+    if (this.pc.length === 0 || this.savedGame === 0)
+    {
+      this.gamePlay.showError('Нет данных для загрузки');
+      return;
+    }
+    this.clearCells();
+    this.resetCells();
+    this.pc = [];
+    this.players = [];
+    let loaded = this.gameService.load();
+    this.players = loaded.players;
+    this.level = loaded.level;
+    this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
+    this.gamePlay.redrawPositions(this.pc);
+    this.gamePlay.drawUi(this.level);
+    
   }
 
   onPCTurn() {
