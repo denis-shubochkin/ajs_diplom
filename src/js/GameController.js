@@ -572,7 +572,7 @@ if(index===63) return [7,7];
     }
    // this.gameService.storage = new Storage();
     let state = {
-      players: this.players,
+      pc: this.pc,
       level: this.level
     }
     this.savedGame = 1;
@@ -592,12 +592,12 @@ if(index===63) return [7,7];
     this.pc = [];
     this.players = [];
     let loaded = this.gameService.load();
-    this.players = loaded.players;
+    this.pc = loaded.pc;
     this.level = loaded.level;
-    this.players.forEach((v) => {this.pc.push(new PositionedCharacter(v,v.cell))}); 
-    this.gamePlay.redrawPositions(this.pc);
+    this.pc.forEach((v) => {this.players.push(v.character)}); 
     this.gamePlay.drawUi(this.level);
-    
+    this.gamePlay.redrawPositions(this.pc);
+    alert('Игра загружена');
   }
 
   onPCTurn() {
