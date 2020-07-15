@@ -174,74 +174,76 @@ export default class GameController {
     };
   }
   
-  transCoor(index) {
-    if(index===0) return [0,0];
-if(index===1) return [1,0];
-if(index===2) return [2,0];
-if(index===3) return [3,0];
-if(index===4) return [4,0];
-if(index===5) return [5,0];
-if(index===6) return [6,0];
-if(index===7) return [7,0];
-if(index===8) return [0,1];
-if(index===9) return [1,1];
-if(index===10) return [2,1];
-if(index===11) return [3,1];
-if(index===12) return [4,1];
-if(index===13) return [5,1];
-if(index===14) return [6,1];
-if(index===15) return [7,1];
-if(index===16) return [0,2];
-if(index===17) return [1,2];
-if(index===18) return [2,2];
-if(index===19) return [3,2];
-if(index===20) return [4,2];
-if(index===21) return [5,2];
-if(index===22) return [6,2];
-if(index===23) return [7,2];
-if(index===24) return [0,3];
-if(index===25) return [1,3];
-if(index===26) return [2,3];
-if(index===27) return [3,3];
-if(index===28) return [4,3];
-if(index===29) return [5,3];
-if(index===30) return [6,3];
-if(index===31) return [7,3];
-if(index===32) return [0,4];
-if(index===33) return [1,4];
-if(index===34) return [2,4];
-if(index===35) return [3,4];
-if(index===36) return [4,4];
-if(index===37) return [5,4];
-if(index===38) return [6,4];
-if(index===39) return [7,4];
-if(index===40) return [0,5];
-if(index===41) return [1,5];
-if(index===42) return [2,5];
-if(index===43) return [3,5];
-if(index===44) return [4,5];
-if(index===45) return [5,5];
-if(index===46) return [6,5];
-if(index===47) return [7,5];
-if(index===48) return [0,6];
-if(index===49) return [1,6];
-if(index===50) return [2,6];
-if(index===51) return [3,6];
-if(index===52) return [4,6];
-if(index===53) return [5,6];
-if(index===54) return [6,6];
-if(index===55) return [7,6];
-if(index===56) return [0,7];
-if(index===57) return [1,7];
-if(index===58) return [2,7];
-if(index===59) return [3,7];
-if(index===60) return [4,7];
-if(index===61) return [5,7];
-if(index===62) return [6,7];
-if(index===63) return [7,7];
-  }
+//   transCoor(index) {
+//     if(index===0) return [0,0];
+// if(index===1) return [1,0];
+// if(index===2) return [2,0];
+// if(index===3) return [3,0];
+// if(index===4) return [4,0];
+// if(index===5) return [5,0];
+// if(index===6) return [6,0];
+// if(index===7) return [7,0];
+// if(index===8) return [0,1];
+// if(index===9) return [1,1];
+// if(index===10) return [2,1];
+// if(index===11) return [3,1];
+// if(index===12) return [4,1];
+// if(index===13) return [5,1];
+// if(index===14) return [6,1];
+// if(index===15) return [7,1];
+// if(index===16) return [0,2];
+// if(index===17) return [1,2];
+// if(index===18) return [2,2];
+// if(index===19) return [3,2];
+// if(index===20) return [4,2];
+// if(index===21) return [5,2];
+// if(index===22) return [6,2];
+// if(index===23) return [7,2];
+// if(index===24) return [0,3];
+// if(index===25) return [1,3];
+// if(index===26) return [2,3];
+// if(index===27) return [3,3];
+// if(index===28) return [4,3];
+// if(index===29) return [5,3];
+// if(index===30) return [6,3];
+// if(index===31) return [7,3];
+// if(index===32) return [0,4];
+// if(index===33) return [1,4];
+// if(index===34) return [2,4];
+// if(index===35) return [3,4];
+// if(index===36) return [4,4];
+// if(index===37) return [5,4];
+// if(index===38) return [6,4];
+// if(index===39) return [7,4];
+// if(index===40) return [0,5];
+// if(index===41) return [1,5];
+// if(index===42) return [2,5];
+// if(index===43) return [3,5];
+// if(index===44) return [4,5];
+// if(index===45) return [5,5];
+// if(index===46) return [6,5];
+// if(index===47) return [7,5];
+// if(index===48) return [0,6];
+// if(index===49) return [1,6];
+// if(index===50) return [2,6];
+// if(index===51) return [3,6];
+// if(index===52) return [4,6];
+// if(index===53) return [5,6];
+// if(index===54) return [6,6];
+// if(index===55) return [7,6];
+// if(index===56) return [0,7];
+// if(index===57) return [1,7];
+// if(index===58) return [2,7];
+// if(index===59) return [3,7];
+// if(index===60) return [4,7];
+// if(index===61) return [5,7];
+// if(index===62) return [6,7];
+// if(index===63) return [7,7];
+//   }
 
- 
+ transCoor(index) {
+  return [(index % 8), (Math.floor(index / 8))];
+}
 
   checkEnemies()
   {

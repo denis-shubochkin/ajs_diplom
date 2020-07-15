@@ -1,3 +1,4 @@
+"use strict";
 import { calcHealthLevel, calcTileType } from './utils';
 
 export default class GamePlay {

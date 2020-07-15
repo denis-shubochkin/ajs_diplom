@@ -1,4 +1,4 @@
-export function calcTileType(index, boardSize) {
+export default function calcTileType(index, boardSize) {
 
   function isInteger(num) {
     return (num ^ 0) === num;
