@@ -29,6 +29,7 @@ export default class GameController {
     this.endGame = 0;
     this.resetLevel = 0;
     this.savedGame = 0;
+    this.errorMessage = '';
   }
 
   init() {
@@ -268,7 +269,6 @@ export default class GameController {
   onCellClick(index) {
     for(let i = 0; i< this.players.length; i++)
     {
-      //выделение персонажа
       if (this.players[i].cell === index)
       {
         if (['bowman','swordsman','magician'].includes(this.players[i].type) && this.gameState.current!='PC')
@@ -280,10 +280,6 @@ export default class GameController {
           this.selectedYellow = index;
           return;
         }
-        // else
-        // {
-        //   this.gamePlay.showError('Этот персонаж не играбельный');
-        // }
       }
       if(this.players[i].cell === this.selectedYellow)
       {
@@ -586,6 +582,7 @@ export default class GameController {
   onLoadGame() {
     if (this.pc.length === 0 || this.savedGame === 0)
     {
+      this.errorMessage = 'Нет данных для загрузки';
       this.gamePlay.showError('Нет данных для загрузки');
       return;
     }

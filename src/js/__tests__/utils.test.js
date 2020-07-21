@@ -1,4 +1,4 @@
-import calcTileType from '../utils.js';
+import { calcTileType } from '../utils.js';
 
 test('return bottom', () =>
   {
